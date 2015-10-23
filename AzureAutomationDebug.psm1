@@ -1,6 +1,6 @@
 $thismodulepath = $psscriptroot
 
-$ConfigObject = get-content (Join-Path $thismodulepath "config.json") | ConvertFrom-Json
+$ConfigObject = get-content (Join-Path $thismodulepath "config.json") -raw | ConvertFrom-Json
 
 $AAUserName = $ConfigObject.AAUsername
 $AAPassword = $ConfigObject.AAPassword
