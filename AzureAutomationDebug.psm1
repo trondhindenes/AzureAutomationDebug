@@ -82,7 +82,18 @@ Function Get-AutomationPSCredential
 Function Get-AutomationVariable
 {
     Param ($name)
-    $return = Get-AzureRmAutomationVariable -Name $name -ResourceGroupName $AutomationResourceGroup -AutomationAccountName $AutomationAccount
-    $return.Value
+    try
+    {
+        $return = Get-AzureRmAutomationVariable -Name $name -ResourceGroupName $AutomationResourceGroup -AutomationAccountName $AutomationAccount -ErrorAction stop
+    }
+    catch
+    {
+    }
+    
+    if ($return)
+    {
+        $return.Value
+    }
+    
 }
 
