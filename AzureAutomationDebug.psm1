@@ -1,18 +1,45 @@
 $thismodulepath = $psscriptroot
 
-$ConfigObject = get-content (Join-Path $thismodulepath "config.json") -raw | ConvertFrom-Json
+if (test-path "config.json")
+{
+    $configfile = get-item "config.json"
+}
+Else
+{   
+    $ConfigFile = Join-Path $thismodulepath "config.json"
+}
+Write-verbose "Loading settings from $($configfile.fullname)"
+$ConfigObject = get-content $configfile -raw | ConvertFrom-Json
+
+
+
+. $thismodulepath\Connect-AzureRest.ps1
 
 $AAUserName = $ConfigObject.AAUsername
 $AAPassword = $ConfigObject.AAPassword
 $AutomationAccount = $ConfigObject.AutomationAccount
 $AutomationResourceGroup = $ConfigObject.AutomationResourceGroup
+$subscriptionId = $configobject.SubscriptionId
+
 
 $cred = New-Object System.Management.Automation.PSCredential($AAUserName,($AAPassword | ConvertTo-SecureString -AsPlainText -Force))
+write-verbose "Logging in to Azure"
+$null = Login-AzureRmAccount -Credential $cred
 
-Login-AzureRmAccount -Credential $cred
+$null = Select-azureRMsubscription -SubscriptionId $subscriptionId
 
-function Decrypt-String($Encrypted, $Passphrase, $salt="SaltCrypto", $init="IV_Password")
+Write-Verbose "Logging in to Azure Rest api"
+$Token = Connect-AzureRest -username $AAUserName -password $AAPassword
+if (!$token) {write-error "Could not authenticate";exit}
+
+function Decrypt-String
 {
+    Param (
+        $Encrypted, 
+        $Passphrase, 
+        $salt="SaltCrypto", 
+        $init="IV_Password"
+    )
 	# If the value in the Encrypted is a string, convert it to Base64
 	if($Encrypted -is [string]){
 		$Encrypted = [Convert]::FromBase64String($Encrypted)
@@ -51,10 +78,15 @@ function Decrypt-String($Encrypted, $Passphrase, $salt="SaltCrypto", $init="IV_P
 	$r.Clear()
 }
 
-<#
+
 Function Get-AutomationPSCredential
 {
-    Param ([string]$Name)
+    [CmdletBinding()]
+    [OutputType([System.Management.Automation.PSCredential])]
+    Param (
+        [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+        [string]$Name
+    )
 
 
     #Generate salt
@@ -67,18 +99,75 @@ Function Get-AutomationPSCredential
             $Salt2+=($alphabet | GET-RANDOM)
     }
     
-    $Params = @{"CredName"=$name;"Salt1"=$Salt;"Salt2"=$Salt}
+    $Params = @{"Name"=$name;"Salt1"=$Salt1;"Salt2"=$Salt2}
 
-    $job = Start-AzureRmAutomationRunbook -name "Get-PSCredential" -Parameters $Params -ResourceGroupName $AutomationResourceGroup -AutomationAccountName $AutomationAccount
+    #First Try
+    try
+    {
+            $job = Start-AzureRmAutomationRunbook -name "Get-PSCredential" -Parameters $Params -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup -ErrorAction Stop -ErrorVariable JobErr
+    }
+    Catch
+    {
+        if ($joberr)
+        {
+            if (($JobErr[0].Message.ToString()) -like "The Runbook was not found*")
+            {
+                Write-Verbose "Adding runbook Get-PsCredential to Azure Automation"
+                Import-AzureRmAutomationRunbook -Name "Get-PSCredential" -Type PowerShell -Path "$thismodulepath\AzureAutomationRunbook\Get-PSCredential.ps1" -Published -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup | out-null
+                Do {
+                    Write-verbose "Waiting until the runbook is registered"
+                    $runbookExists = $false
+                    Try
+                    {
+                        $rbexists = Get-AzureRmAutomationRunbook -Name "Get-PSCredential" -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup -ErrorAction Stop
+                    }
+                    Catch {}
+                    if ($rbexists) {$runbookExists = $true}
+                    
+                }
+                Until ($runbookExists -eq $true)
+                
+            }
+        }
+        Else 
+        {
+            Write-error "Could not start runbook";exit
+        }
+    }
+
+    
+
+    
+    #Second try
+    $job = Start-AzureRmAutomationRunbook -name "Get-PSCredential" -Parameters $Params -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
+
     do {
-        $job = $job | Get-AzureRmAutomationJob
+        Write-verbose "Waiting for credentials"
+        Start-sleep -seconds 1
+        $job = $job | Get-AzureAutomationJob
     }
     until ($job.Status -eq "completed")
     
-    $Output = Get-AzureRmAutomationJobOutput -Id $job.Id -ResourceGroupName $AutomationResourceGroup -AutomationAccountName $AutomationAccount
-    $OutObj = $Output.Text | ConvertFrom-Json
+    $out = Get-AzureRmAutomationJobOutput -Id $job.Id -Stream Output -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
+    $uri = "https://management.core.windows.net/$subscriptionid/cloudservices/OaaSCS/resources/automation/~/automationAccounts/$AutomationAccount/jobs/$($job.id)/streams/$($out.JobStreamId)?api-version=2014-12-08"
+    $headers = @{
+        "x-ms-version"="2013-06-01";
+        "Content-Type"="application/json";
+        "Authorization"=$token
+        }
+    Write-verbose "Getting the job output"
+    $StreamDetails = Invoke-RestMethod -Uri $uri -Headers $headers
+    $ReturnObj = $StreamDetails.properties.value.value | convertfrom-json | convertfrom-json
+    $returnedUserName = $returnobj.UserName
+    $returnedPassword = $returnobj.Password
+    Write-verbose "Decrypting credentials"
+    $returnedPasswordDecrypted = Decrypt-String -Encrypted $returnedpassword -salt $salt1 -Passphrase $salt2
+
+    $returncredential = New-Object System.Management.Automation.PSCredential($returnedUserName,($returnedPasswordDecrypted | ConvertTo-SecureString -AsPlainText -Force))
+    Write-verbose "Credentials decrypted. Returning"
+    $returncredential
 }
-#>
+
 Function Get-AutomationVariable
 {
     Param ($name)

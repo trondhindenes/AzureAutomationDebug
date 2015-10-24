@@ -1,0 +1,7 @@
+{
+    "AAUsername":"myusername@somewhere.com",
+    "AAPassword":"Passoid",
+    "AutomationAccount": "MyAutomationAccount",
+    "AutomationResourceGroup": "MyResourceGroup",
+    "SubscriptionId": "SubscriptionIdGuid"
+}
