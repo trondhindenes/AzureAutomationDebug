@@ -10,6 +10,8 @@ This module requires the AzureRm module for interacting with Azure thru ARM.
 
 This module requres the existence of the "Get-PSCredential" runbook (of type powershell) in Azure automation. It will be auto-added if it doesn't already exist.
 
+To configure the automation account, use azureautomationdebugconfig.json (example provided). The script looks for azureautomationdebugconfig.json in the current directory, and falls back to the module directory if not found.
+
 
 
 
