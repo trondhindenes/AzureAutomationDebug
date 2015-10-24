@@ -1,6 +1,6 @@
 $thismodulepath = $psscriptroot
 
-if (test-path "config.json")
+if (test-path "azureautomationdebugconfig.json")
 {
     $configfile = get-item "azureautomationdebugconfig.json"
 }
@@ -15,14 +15,31 @@ $ConfigObject = get-content $configfile -raw | ConvertFrom-Json
 
 . $thismodulepath\Connect-AzureRest.ps1
 
-$AAUserName = $ConfigObject.AAUsername
-$AAPassword = $ConfigObject.AAPassword
+#Test credxml first
+$AACredsPath = $ConfigObject.AACredentialsXmlPath
+if (test-path $AACredsPath)
+{
+    Write-verbose "Loading creds from $AACredsPath"
+    $Cred = Import-Clixml $AACredsPath
+    $AAUsername = $cred.username
+    $AAPassword = $Cred.GetNetworkCredential().Password
+
+}
+Else
+{
+    Write-verbose "Loading creds from json config"
+    $AAUserName = $ConfigObject.AAUsername
+    $AAPassword = $ConfigObject.AAPassword
+    $cred = New-Object System.Management.Automation.PSCredential($AAUserName,($AAPassword | ConvertTo-SecureString -AsPlainText -Force))
+}
+
+
 $AutomationAccount = $ConfigObject.AutomationAccount
 $AutomationResourceGroup = $ConfigObject.AutomationResourceGroup
 $subscriptionId = $configobject.SubscriptionId
 
 
-$cred = New-Object System.Management.Automation.PSCredential($AAUserName,($AAPassword | ConvertTo-SecureString -AsPlainText -Force))
+
 write-verbose "Logging in to Azure"
 $null = Login-AzureRmAccount -Credential $cred
 

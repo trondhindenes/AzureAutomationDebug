@@ -1,4 +1,5 @@
 {
+    "AACredentialsXmlPath": "MyExportedCreds.xml",
     "AAUsername":"myusername@somewhere.com",
     "AAPassword":"Passoid",
     "AutomationAccount": "MyAutomationAccount",
