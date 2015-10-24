@@ -1,7 +1,7 @@
 # AzureAutomationDebug
 Emulated cmdlets for quick and easy local debugging of Azure Automation Powershell runbooks.
 
-This module allows you to run Azure Automation scripts and runbooks locally. Calls to Get-AutomationPSCredential and get-AutomationVariable will return values from the specified Automation Account. This module does not use a local cache or "vault" for password, it retrieves the actual values directly from Azure automation. Less configuration, less fuss.
+This module allows you to run Azure Automation scripts and runbooks locally. Calls to Get-AutomationPSCredential and get-AutomationVariable will return values from the specified Automation Account. This module does not use a local cache or "vault" for credentials, it retrieves the actual values directly from Azure automation. Less configuration, less fuss.
 
 In order to make it a little harder to plain-text-read output from Get-AutomationPSCredentials (by simply looking at the job output), the output values are encrypted in Azure, and decrypted locally (this happens behind the scenes).
 Note that it is STILL possible to decrypt passwords using the auto-generated salt1 and salt2 params sent to the automation job.
