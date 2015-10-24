@@ -12,6 +12,8 @@ This module requres the existence of the "Get-PSCredential" runbook (of type pow
 
 To configure the automation account, use azureautomationdebugconfig.json (example provided). The script looks for azureautomationdebugconfig.json in the current directory, and falls back to the module directory if not found.
 
+Configure credentials either by pointing to a xml file with saved credentials (using `Get-credential | export-clixml mycreds.xml`) or by providing username and password directly in the json (which is less secure).
+
 
 
 
