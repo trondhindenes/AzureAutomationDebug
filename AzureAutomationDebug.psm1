@@ -161,14 +161,15 @@ Function Get-AutomationPSCredential
     do {
         Write-verbose "Waiting for credentials"
         Start-sleep -seconds 1
-        $job = $job | Get-AzureAutomationJob
+        $job = Get-AzureRmAutomationJob -Id $job.id -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
     }
     until ($job.Status -eq "completed")
     
     $out = Get-AzureRmAutomationJobOutput -Id $job.Id -Stream Output -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
-    $uri = "https://management.core.windows.net/$subscriptionid/cloudservices/OaaSCS/resources/automation/~/automationAccounts/$AutomationAccount/jobs/$($job.id)/streams/$($out.JobStreamId)?api-version=2014-12-08"
+    #$uri = "https://management.core.windows.net/$subscriptionid/cloudservices/OaaSCS/resources/automation/~/automationAccounts/$AutomationAccount/jobs/$($job.id)/streams/$($out.JobStreamId)?api-version=2014-12-08"
+    $uri = "https://management.azure.com/subscriptions/$subscriptionid/resourceGroups/$AutomationResourceGroup/providers/Microsoft.Automation/automationAccounts/$AutomationAccount/Jobs/$($job.id)/streams/$($out.JobStreamId)?api-version=2015-01-01-preview"
     $headers = @{
-        "x-ms-version"="2013-06-01";
+        "x-ms-version"="2014-06-01";
         "Content-Type"="application/json";
         "Authorization"=$token
         }
