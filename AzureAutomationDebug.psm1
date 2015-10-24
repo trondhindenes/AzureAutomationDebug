@@ -2,11 +2,11 @@ $thismodulepath = $psscriptroot
 
 if (test-path "config.json")
 {
-    $configfile = get-item "config.json"
+    $configfile = get-item "azureautomationdebugconfig.json"
 }
 Else
 {   
-    $ConfigFile = Join-Path $thismodulepath "config.json"
+    $ConfigFile = Join-Path $thismodulepath "azureautomationdebugconfig.json"
 }
 Write-verbose "Loading settings from $($configfile.fullname)"
 $ConfigObject = get-content $configfile -raw | ConvertFrom-Json
