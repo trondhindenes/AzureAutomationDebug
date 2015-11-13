@@ -106,6 +106,9 @@ Function Get-AutomationPSCredential
     )
 
 
+    #Get an updated token
+    . $thismodulepath\Connect-AzureRest.ps1
+
     #Generate salt
     $alphabet=$NULL;For ($a=65;$a –le 90;$a++) {$alphabet+=,[char][byte]$a }
     For ($loop=1; $loop –le 32; $loop++) {
