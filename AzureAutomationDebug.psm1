@@ -110,12 +110,12 @@ Function Get-AutomationPSCredential
     . $thismodulepath\Connect-AzureRest.ps1
 
     #Generate salt
-    $alphabet=$NULL;For ($a=65;$a â€“le 90;$a++) {$alphabet+=,[char][byte]$a }
-    For ($loop=1; $loop â€“le 32; $loop++) {
+    $alphabet=$NULL;For ($a=65;$a –le 90;$a++) {$alphabet+=,[char][byte]$a }
+    For ($loop=1; $loop –le 32; $loop++) {
             $Salt1+=($alphabet | GET-RANDOM)
     }
 
-    For ($loop=1; $loop â€“le 32; $loop++) {
+    For ($loop=1; $loop –le 32; $loop++) {
             $Salt2+=($alphabet | GET-RANDOM)
     }
     
