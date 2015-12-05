@@ -41,9 +41,9 @@ $subscriptionId = $configobject.SubscriptionId
 
 
 write-verbose "Logging in to Azure"
-$null = Login-AzureRmAccount -Credential $cred
+$login = Login-AzureRmAccount -Credential $cred
 
-$null = Select-azureRMsubscription -SubscriptionId $subscriptionId
+$null = Select-azureRMsubscription -SubscriptionId $subscriptionId -TenantId $login.Context.Tenant.TenantId
 
 Write-Verbose "Logging in to Azure Rest api"
 $Token = Connect-AzureRest -username $AAUserName -password $AAPassword
@@ -110,17 +110,17 @@ Function Get-AutomationPSCredential
     . $thismodulepath\Connect-AzureRest.ps1
 
     #Generate salt
-    $alphabet=$NULL;For ($a=65;$a –le 90;$a++) {$alphabet+=,[char][byte]$a }
-    For ($loop=1; $loop –le 32; $loop++) {
+    $alphabet=$NULL;For ($a=65;$a â€“le 90;$a++) {$alphabet+=,[char][byte]$a }
+    For ($loop=1; $loop â€“le 32; $loop++) {
             $Salt1+=($alphabet | GET-RANDOM)
     }
 
-    For ($loop=1; $loop –le 32; $loop++) {
+    For ($loop=1; $loop â€“le 32; $loop++) {
             $Salt2+=($alphabet | GET-RANDOM)
     }
     
     $Params = @{"Name"=$name;"Salt1"=$Salt1;"Salt2"=$Salt2}
-
+    $FirstFail = $false
     #First Try
     try
     {
@@ -128,6 +128,7 @@ Function Get-AutomationPSCredential
     }
     Catch
     {
+        $FirstFail = $true
         if ($joberr)
         {
             if (($JobErr[0].Message.ToString()) -like "The Runbook was not found*")
@@ -159,7 +160,11 @@ Function Get-AutomationPSCredential
 
     
     #Second try
-    $job = Start-AzureRmAutomationRunbook -name "Get-PSCredential" -Parameters $Params -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
+    if ($firstfail -eq $true)
+    {
+        $job = Start-AzureRmAutomationRunbook -name "Get-PSCredential" -Parameters $Params -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
+    }
+    
 
     do {
         Write-verbose "Waiting for credentials"
