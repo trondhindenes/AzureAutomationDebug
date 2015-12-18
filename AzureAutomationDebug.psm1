@@ -1,5 +1,13 @@
 $thismodulepath = $psscriptroot
 
+#test required module version
+$mod = Get-Module azurerm.automation
+[System.Version]$RequiredVersion = "1.0.2"
+if (($mod.Version.CompareTo($RequiredVersion) -lt 0))
+{
+    throw "please update AzureRM.Automation"
+}
+
 if (test-path "azureautomationdebugconfig.json")
 {
     $configfile = get-item "azureautomationdebugconfig.json"
@@ -110,12 +118,12 @@ Function Get-AutomationPSCredential
     . $thismodulepath\Connect-AzureRest.ps1
 
     #Generate salt
-    $alphabet=$NULL;For ($a=65;$a â€“le 90;$a++) {$alphabet+=,[char][byte]$a }
-    For ($loop=1; $loop â€“le 32; $loop++) {
+    $alphabet=$NULL;For ($a=65;$a –le 90;$a++) {$alphabet+=,[char][byte]$a }
+    For ($loop=1; $loop –le 32; $loop++) {
             $Salt1+=($alphabet | GET-RANDOM)
     }
 
-    For ($loop=1; $loop â€“le 32; $loop++) {
+    For ($loop=1; $loop –le 32; $loop++) {
             $Salt2+=($alphabet | GET-RANDOM)
     }
     
@@ -169,13 +177,13 @@ Function Get-AutomationPSCredential
     do {
         Write-verbose "Waiting for credentials"
         Start-sleep -seconds 1
-        $job = Get-AzureRmAutomationJob -Id $job.id -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
+        $job = Get-AzureRmAutomationJob -Id $job.JobId -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
     }
     until ($job.Status -eq "completed")
     
-    $out = Get-AzureRmAutomationJobOutput -Id $job.Id -Stream Output -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
+    $out = Get-AzureRmAutomationJobOutput -Id $job.JobId -Stream Output -AutomationAccountName $AutomationAccount -ResourceGroupName $AutomationResourceGroup
     #$uri = "https://management.core.windows.net/$subscriptionid/cloudservices/OaaSCS/resources/automation/~/automationAccounts/$AutomationAccount/jobs/$($job.id)/streams/$($out.JobStreamId)?api-version=2014-12-08"
-    $uri = "https://management.azure.com/subscriptions/$subscriptionid/resourceGroups/$AutomationResourceGroup/providers/Microsoft.Automation/automationAccounts/$AutomationAccount/Jobs/$($job.id)/streams/$($out.JobStreamId)?api-version=2015-01-01-preview"
+    $uri = "https://management.azure.com/subscriptions/$subscriptionid/resourceGroups/$AutomationResourceGroup/providers/Microsoft.Automation/automationAccounts/$AutomationAccount/Jobs/$($job.Jobid.ToString())/streams/$($out.StreamRecordId)?api-version=2015-01-01-preview"
     $headers = @{
         "x-ms-version"="2014-06-01";
         "Content-Type"="application/json";
@@ -183,7 +191,7 @@ Function Get-AutomationPSCredential
         }
     Write-verbose "Getting the job output"
     $StreamDetails = Invoke-RestMethod -Uri $uri -Headers $headers
-    $ReturnObj = $StreamDetails.properties.value.value | convertfrom-json | convertfrom-json
+    $ReturnObj = $StreamDetails.properties.value.value | convertfrom-json
     $returnedUserName = $returnobj.UserName
     $returnedPassword = $returnobj.Password
     Write-verbose "Decrypting credentials"
