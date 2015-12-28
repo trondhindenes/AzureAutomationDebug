@@ -106,6 +106,12 @@ function Decrypt-String
 
 Function Get-AutomationPSCredential
 {
+    <#
+    .Notes
+    Before using this function, make sure you have successfully loaded the module. Login to Azure happens during module load, 
+    which is using a config json file to log on. This is decribed in detail here:
+    https://github.com/trondhindenes/AzureAutomationDebug
+    #>
     [CmdletBinding()]
     [OutputType([System.Management.Automation.PSCredential])]
     Param (

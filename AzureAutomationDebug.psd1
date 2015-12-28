@@ -12,7 +12,7 @@
 RootModule = 'AzureAutomationDebug.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.3.6'
+ModuleVersion = '1.3.8'
 
 # ID used to uniquely identify this module
 GUID = '8ee8bd6c-dcef-429b-a39e-15aa2503b024'
