@@ -106,6 +106,12 @@ function Decrypt-String
 
 Function Get-AutomationPSCredential
 {
+    <#
+    .Notes
+    Before using this function, make sure you have successfully loaded the module. Login to Azure happens during module load, 
+    which is using a config json file to log on. This is decribed in detail here:
+    https://github.com/trondhindenes/AzureAutomationDebug
+    #>
     [CmdletBinding()]
     [OutputType([System.Management.Automation.PSCredential])]
     Param (
@@ -118,12 +124,12 @@ Function Get-AutomationPSCredential
     . $thismodulepath\Connect-AzureRest.ps1
 
     #Generate salt
-    $alphabet=$NULL;For ($a=65;$a –le 90;$a++) {$alphabet+=,[char][byte]$a }
-    For ($loop=1; $loop –le 32; $loop++) {
+    $alphabet=$NULL;For ($a=65;$a ï¿½le 90;$a++) {$alphabet+=,[char][byte]$a }
+    For ($loop=1; $loop ï¿½le 32; $loop++) {
             $Salt1+=($alphabet | GET-RANDOM)
     }
 
-    For ($loop=1; $loop –le 32; $loop++) {
+    For ($loop=1; $loop ï¿½le 32; $loop++) {
             $Salt2+=($alphabet | GET-RANDOM)
     }
     
